@@ -1,0 +1,37 @@
+[package]
+name = "rvine"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+build = "build.rs"
+
+[workspace]
+
+members = [
+    # core
+    "codec",
+    "registry",
+    "broker",
+    "server",
+    "client",
+
+    # lib
+    "errors",
+    "logger",
+]
+
+[dependencies]
+# rvine core library 
+codec = { path = "codec" }
+registry = { path = "registry" }
+broker = { path = "broker" }
+server = { path = "server" }
+client = { path = "client" }
+# rvine library
+logger = { path = "logger" }
+errors = { path = "errors" }
+
+[build-dependencies]
+tonic-build = { version = "0.5.2", features = ["prost", "compression"] }
