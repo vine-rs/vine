@@ -1,6 +1,6 @@
-use backtrace::Backtrace;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use vine_util::caller::caller;
 
 pub type Result<T> = anyhow::Result<T>;
 
@@ -200,19 +200,26 @@ impl Status {
     }
 
     #[inline]
-    pub fn with_id(&mut self, id: impl Into<String>) -> &Self {
+    pub fn with_id(mut self, id: impl Into<String>) -> Self {
         self.id = id.into();
         self
     }
 
     #[inline]
-    pub fn with_code(&mut self, code: Code) -> &Self {
+    pub fn with_code(mut self, code: Code) -> Self {
         self.code = code;
+        self.status = code.description().to_string();
         self
     }
 
     #[inline]
-    pub fn with_pos(&mut self) -> &Self {
+    pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
+        self.detail = detail.into();
+        self
+    }
+
+    #[inline]
+    pub fn with_pos(mut self) -> Self {
         self.position = caller(5);
         self
     }
@@ -387,8 +394,7 @@ impl Into<tonic::Status> for Status {
     fn into(self) -> tonic::Status {
         let code = match self.code() {
             Code::Unknown => tonic::Code::Unknown,
-            Code::Continue |
-            Code::Ok => tonic::Code::Ok,
+            Code::Continue | Code::Ok => tonic::Code::Ok,
             Code::BadRequest => tonic::Code::InvalidArgument,
             Code::Unauthorized => tonic::Code::Unauthenticated,
             Code::Forbidden => tonic::Code::PermissionDenied,
@@ -408,37 +414,9 @@ impl Into<tonic::Status> for Status {
     }
 }
 
-pub fn caller(skip: usize) -> String {
-    let bt = Backtrace::new();
-    let mut out = String::new();
-    let frame = bt.frames().get(skip);
-    if frame.is_none() {
-        return out;
-    }
-    backtrace::resolve(frame.unwrap().ip(), |cb| {
-        let filename = cb.filename();
-        let lineno = cb.lineno();
-        if filename.is_some() && lineno.is_some() {
-            out = format!(
-                "{}:{}",
-                filename.unwrap().to_path_buf().to_str().unwrap(),
-                lineno.unwrap()
-            );
-        }
-    });
-
-    out
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{caller, Code, Status};
-
-    #[test]
-    fn test_backtrace() {
-        assert_ne!(caller(5), "");
-        assert_eq!(caller(100), "");
-    }
+    use crate::{Code, Status};
 
     #[test]
     fn test_new() {
@@ -447,6 +425,13 @@ mod tests {
 
         assert_eq!(status1.code(), Code::InternalServerError);
         assert_eq!(status1.code(), status2.code());
+    }
+
+    #[test]
+    fn test_builder() {
+        let s = Status::bad_gateway("", "").with_id("io.vine").with_detail("invalid request").with_pos();
+        assert_eq!(s.id(), "io.vine");
+        assert_ne!(s.position(), "");
     }
 
     #[test]

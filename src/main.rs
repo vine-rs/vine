@@ -1,3 +1,6 @@
+use errors::Status;
+
 fn main() {
-    println!("Hello, world!");
+    let s = Status::internal_server_error("io.vine", "internal");
+    println!("{}", s);
 }
