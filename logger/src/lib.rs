@@ -3,13 +3,13 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use anyhow::Result;
 use bytes::BufMut;
 use chrono::prelude::*;
 use helper::Helper;
 use itertools::Itertools;
 use once_cell::sync::OnceCell;
 
+use errors::Result;
 use level::Level;
 use options::Options;
 use vine_util::caller::caller;
@@ -31,7 +31,7 @@ pub fn global_logger() -> &'static Arc<Mutex<Helper<String>>> {
 pub fn set_global_logger(val: Helper<String>) -> Result<()> {
     match DEFAULT_LOGGER.set(Arc::new(Mutex::new(val))) {
         Ok(()) => Ok(()),
-        Err(_) => Err(anyhow::anyhow!("set global logger failed")),
+        Err(_) => Err(errors::err!("set global logger failed")),
     }
 }
 
@@ -151,9 +151,10 @@ mod tests {
     };
 
     use crate::{
-        global_logger, level::Level, options::Options, set_global_logger, Helper, Logger, new_logger,
+        global_logger, level::Level, new_logger, options::Options, set_global_logger, Helper,
+        Logger,
     };
-    use anyhow::Result;
+    use errors::Result;
 
     #[test]
     fn do_work() {
@@ -178,7 +179,7 @@ mod tests {
         let sync_logger = Arc::new(Mutex::new(helper));
 
         let l1 = sync_logger.clone();
-        thread::spawn(move || {
+        let _ = thread::spawn(move || {
             let a = l1.lock().unwrap();
 
             a.log(Level::InfoLevel, "thread info".as_bytes());

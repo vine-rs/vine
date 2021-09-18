@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct Options {
-    pub addr: Vec<String>,
+    pub addrs: Vec<String>,
     pub timeout: i64,
     pub secure: bool,
     // pub tls_config:
@@ -10,7 +10,7 @@ impl Options {
     #[inline]
     pub fn new() -> Self {
         Options {
-            addr: vec![String::from("127.0.0.1:2379")],
+            addrs: vec![String::from("127.0.0.1:2379")],
             timeout: 15,
             secure: false,
         }

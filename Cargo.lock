@@ -461,6 +461,7 @@ dependencies = [
  "anyhow",
  "bytes",
  "chrono",
+ "errors",
  "itertools 0.8.2",
  "once_cell",
  "vine-util",
@@ -766,7 +767,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "errors",
  "etcd-client",
+ "itertools 0.8.2",
+ "logger",
  "once_cell",
  "prost",
  "prost-types",

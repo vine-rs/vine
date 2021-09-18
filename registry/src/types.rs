@@ -3,7 +3,7 @@ use std::collections::{hash_map::DefaultHasher, HashMap};
 use std::hash::{Hash, Hasher};
 
 /// Service represents a vine service
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Service {
     pub name: String,
     pub version: String,
@@ -15,7 +15,7 @@ pub struct Service {
 }
 
 /// Node represents the node the service is on
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Node {
     pub id: String,
     pub address: String,
@@ -38,7 +38,7 @@ impl Hash for Node {
 }
 
 /// Endpoint is a endpoint provided by a service
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Endpoint {
     pub name: String,
     pub request: Option<Value>,
@@ -47,7 +47,7 @@ pub struct Endpoint {
 }
 
 /// Value is an opaque value for a request or response
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Value {
     pub name: String,
     pub rtype: String,
@@ -55,13 +55,13 @@ pub struct Value {
 }
 
 /// Options are registry options
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Options {
     pub ttl: i64,
 }
 
 /// Result is returns by the watcher
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Result {
     /// create, update, delete
     pub action: String,
@@ -71,7 +71,7 @@ pub struct Result {
 }
 
 /// Event is registry event
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Event {
     /// Event Id
     pub id: String,
@@ -84,7 +84,7 @@ pub struct Event {
     pub service: Option<Service>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApi {
     pub openapi: String,
     pub info: Option<OpenApiInfo>,
@@ -95,13 +95,13 @@ pub struct OpenApi {
     pub components: Option<OpenApiComponents>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiServer {
     pub url: String,
     pub description: String,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiInfo {
     pub title: String,
     pub description: String,
@@ -111,32 +111,32 @@ pub struct OpenApiInfo {
     pub version: String,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiContact {
     pub name: String,
     pub email: String,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiLicense {
     pub name: String,
     pub url: String,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiTag {
     pub name: String,
     pub description: String,
     pub external_docs: Option<OpenApiExternalDocs>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiExternalDocs {
     pub description: String,
     pub url: String,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiPath {
     pub get: Option<OpenApiPathDocs>,
     pub post: Option<OpenApiPathDocs>,
@@ -145,7 +145,7 @@ pub struct OpenApiPath {
     pub delete: Option<OpenApiPathDocs>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiPathDocs {
     pub tags: Vec<String>,
     pub summary: String,
@@ -158,14 +158,14 @@ pub struct OpenApiPathDocs {
     pub security: Vec<PathSecurity>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PathSecurity {
     pub basic: Vec<String>,
     pub api_keys: Vec<String>,
     pub bearer: Vec<String>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PathParameters {
     /// query, cookie, path
     #[serde(rename = "in")]
@@ -181,38 +181,38 @@ pub struct PathParameters {
     pub example: String,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PathRequestBody {
     pub description: String,
     pub required: bool,
     pub content: Option<PathRequestBodyContent>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PathRequestBodyContent {
     pub application_json: Option<ApplicationContent>,
     pub application_xml: Option<ApplicationContent>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationContent {
     pub schema: Option<Schema>,
 }
 
 /// PathResponse is swagger path response
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PathResponse {
     pub description: String,
     pub content: Option<PathRequestBodyContent>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OpenApiComponents {
     pub security_schemes: Option<SecuritySchemes>,
     pub schemas: HashMap<String, Model>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SecuritySchemes {
     pub basic: Option<BasicSecurity>,
     pub api_keys: Option<ApiKeysSecurity>,
@@ -220,7 +220,7 @@ pub struct SecuritySchemes {
 }
 
 /// BasicSecurity is swagger Basic Authorization security (https://swagger.io/docs/specification/authentication/basic-authentication/)
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BasicSecurity {
     /// http, apiKey, oauth, openIdConnect
     #[serde(rename = "type")]
@@ -229,7 +229,7 @@ pub struct BasicSecurity {
 }
 
 /// APIKeysSecurity is swagger API keys Authorization security (https://swagger.io/docs/specification/authentication/api-keys/)
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ApiKeysSecurity {
     #[serde(rename = "type")]
     pub r#type: String,
@@ -240,7 +240,7 @@ pub struct ApiKeysSecurity {
 }
 
 /// BearerSecurity is swagger Bearer Authorization security (https://swagger.io/docs/specification/authentication/bearer-authentication/)
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BearerSecurity {
     /// http
     #[serde(rename = "type")]
@@ -251,7 +251,7 @@ pub struct BearerSecurity {
 }
 
 /// Model is swagger data models (https://swagger.io/docs/specification/data-models/)
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Model {
     /// string, number, integer, boolean, array, object
     #[serde(rename = "type")]
@@ -260,7 +260,7 @@ pub struct Model {
     pub required: Vec<String>,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Schema {
     #[serde(rename = "type")]
     pub r#type: String,

@@ -414,8 +414,48 @@ impl Into<tonic::Status> for Status {
     }
 }
 
+/// ```rust
+/// fn main() -> Result<()> {
+///     Err(err!("custom error"))
+/// }
+/// ```
+#[macro_export]
+macro_rules! err {
+    ($msg:literal $(,)?) => {
+        // Handle $:literal as a special case to make cargo-expanded code more
+        // concise in the common case.
+        anyhow::anyhow!($msg)
+    };
+    ($err:expr $(,)?) => ({
+        anyhow::anyhow!($err)
+    });
+    ($fmt:expr, $($arg:tt)*) => {
+        anyhow::anyhow!($fmt, $($arg)*)
+    };
+}
+
+/// ```rust
+/// fn main() -> Result<()> {
+///     bail!("custom error")
+/// }
+/// ```
+#[macro_export]
+macro_rules! bail {
+    ($msg:literal $(,)?) => {
+        return Err($crate::err!($msg));
+    };
+    ($err:expr $(,)?) => {
+        return Err($crate::err!($err));
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        return Err($crate::err!($fmt, $($arg)*));
+    };
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::bail;
+    use crate::Result;
     use crate::{Code, Status};
 
     #[test]
@@ -429,7 +469,10 @@ mod tests {
 
     #[test]
     fn test_builder() {
-        let s = Status::bad_gateway("", "").with_id("io.vine").with_detail("invalid request").with_pos();
+        let s = Status::bad_gateway("", "")
+            .with_id("io.vine")
+            .with_detail("invalid request")
+            .with_pos();
         assert_eq!(s.id(), "io.vine");
         assert_ne!(s.position(), "");
     }
@@ -462,5 +505,39 @@ mod tests {
         let ts: tonic::Status = s.into();
         assert_eq!(ts.message(), "internal");
         assert_eq!(ts.code(), tonic::Code::Internal);
+    }
+
+    fn bail() -> Result<()> {
+        bail!("bail error")
+    }
+
+    fn bail_status() -> Result<()> {
+        bail!(Status::new("io.vine", "custom", Code::InternalServerError))
+    }
+
+    #[test]
+    fn test_macro() {
+        let ce: Result<()> = { Err(err!("custom")) };
+        assert!(ce.is_err());
+        let cee = ce.err().unwrap();
+        assert_eq!(cee.to_string(), "custom".to_string());
+
+        let e: Result<()> = { Err(err!("{}", 1 == 1)) };
+        assert!(e.is_err());
+        let ee = e.err().unwrap();
+        assert_eq!(ee.to_string(), "true".to_string());
+
+        let se: Result<()> = { Err(err!(Status::new("io.vine", "custom", Code::BadRequest))) };
+        assert!(se.is_err());
+        let see = se.err().unwrap();
+        assert_eq!(see.to_string(), Status::new("io.vine", "custom", Code::BadRequest).to_string());
+
+        let b = bail();
+        assert!(b.is_err());
+        assert_eq!(b.err().unwrap().to_string(), "bail error");
+
+        let bb = bail_status();
+        assert!(bb.is_err());
+        assert_eq!(bb.err().unwrap().to_string(), Status::new("io.vine", "custom", Code::InternalServerError).to_string());
     }
 }

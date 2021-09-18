@@ -1,5 +1,5 @@
-use anyhow::anyhow;
-use anyhow::Result;
+use errors::err;
+use errors::Result;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Level {
@@ -40,7 +40,7 @@ impl Level {
             "warn" => Ok(Level::WarnLevel),
             "error" => Ok(Level::ErrorLevel),
             "fatal" => Ok(Level::FatalLevel),
-            _ => Err(anyhow!(
+            _ => Err(err!(
                 "Unknown Level String: '{}', defaulting to InfoLevel",
                 s.as_str(),
             )),
@@ -70,7 +70,7 @@ impl std::fmt::Display for Level {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
+    use errors::Result;
 
     use crate::level::Level;
 

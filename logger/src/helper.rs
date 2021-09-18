@@ -5,7 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use anyhow::Result;
+use errors::Result;
 
 use crate::{level::Level, options::Options, Logger};
 
@@ -154,7 +154,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::{helper::Helper, options::Options, new_logger};
-    use anyhow::Result;
+    use errors::Result;
 
     #[test]
     fn test_new_helper() -> Result<()> {

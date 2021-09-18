@@ -12,4 +12,5 @@ itertools = "0.8"
 chrono = "0.4"
 once_cell = { version = "1.8.0" }
 
-vine-util = {path = "../vine-util"}
+errors = { path = "../errors" }
+vine-util = { path = "../vine-util" }
