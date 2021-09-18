@@ -1,47 +1,56 @@
 use std::{
-    cell::RefCell,
     collections::HashMap,
     io::{self, Write},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use crate::level::Level;
 
-pub struct Options<T> {
+#[derive(Clone)]
+pub struct Options<T: Into<String> + Clone + Send> {
     /// the logging level the logger should log at. default is `InfoLevel`
     level: Level,
 
+    skip: i32,
+
     /// fields to always be logged
-    fields: HashMap<String, T>,
+    fields: Arc<Mutex<HashMap<String, T>>>,
 
     /// It's common to set this to a file, or leave it default which is `io::Stdout`
-    out: Arc<RefCell<dyn Write>>,
+    out: Arc<Mutex<dyn Write + Send>>,
 }
 
 impl<T> Options<T>
 where
-    T: Into<String> + Clone,
+    T: Into<String> + Clone + Send,
 {
     pub fn new() -> Self {
         let out = io::stdout();
         Options {
             level: Level::InfoLevel,
-            fields: HashMap::new(),
-            out: Arc::new(RefCell::new(out)),
+            skip: 2,
+            fields: Arc::new(Mutex::new(HashMap::new())),
+            out: Arc::new(Mutex::new(out)),
         }
     }
-
-    // pub fn from()
 
     pub fn level(&self) -> Level {
         self.level.clone()
     }
 
-    pub fn fields(&self) -> HashMap<String, T> {
-        HashMap::clone(&self.fields)
+    pub fn skip(&self) -> i32 {
+        self.skip
     }
 
-    pub fn out(&self) -> Arc<RefCell<dyn Write>> {
+    pub fn fields(&self) -> HashMap<String, T> {
+        let rc = self.fields.clone();
+        if let Ok(ref mut out) = rc.lock() {
+            return out.clone();
+        };
+        HashMap::new()
+    }
+
+    pub fn out(&self) -> Arc<Mutex<dyn Write>> {
         self.out.clone()
     }
 
@@ -52,23 +61,33 @@ where
         self
     }
 
+    /// set default skip for the logger
+    #[inline]
+    pub fn with_skip(mut self, skip: i32) -> Self {
+        self.skip = skip;
+        self
+    }
+
     /// set default fields for the logger
     #[inline]
     pub fn with_fields(mut self, fields: HashMap<String, T>) -> Self {
-        self.fields = fields;
+        self.fields = Arc::new(Mutex::new(fields));
         self
     }
 
     /// insert key and value to the Options
     #[inline]
-    pub fn insert_field(mut self, k: String, v: T) -> Self {
-        self.fields.insert(k, v);
+    pub fn insert_field(self, k: String, v: T) -> Self {
+        let rc = &self.fields.clone();
+        if let Ok(ref mut m) = rc.lock() {
+            m.insert(k, v);
+        };
         self
     }
 
     /// set default output for the logger
     #[inline]
-    pub fn with_out(mut self, out: Arc<RefCell<dyn Write>>) -> Self {
+    pub fn with_out(mut self, out: Arc<Mutex<dyn Write + Send>>) -> Self {
         self.out = out;
         self
     }
@@ -76,7 +95,11 @@ where
 
 #[cfg(test)]
 mod test {
-    use std::{cell::RefCell, collections::HashMap, io, sync::Arc};
+    use std::{
+        collections::HashMap,
+        io,
+        sync::{Arc, Mutex},
+    };
 
     use crate::level::Level;
 
@@ -95,7 +118,7 @@ mod test {
         let mc = m.clone();
         let mut opt: Options<String> = Options::new()
             .with_level(Level::ErrorLevel)
-            .with_out(Arc::new(RefCell::new(io::stdout())));
+            .with_out(Arc::new(Mutex::new(io::stdout())));
 
         opt = opt
             .with_fields(m)
@@ -108,8 +131,9 @@ mod test {
     fn test_out() {
         let opt: Options<String> = Options::new();
         let rc = opt.out().clone();
-        let mut writer = rc.as_ref().borrow_mut();
-        let result = writer.write(b"buf");
-        assert!(result.is_ok());
+        if let Ok(ref mut writer) = rc.lock() {
+            let result = writer.write(b"buf\n");
+            assert!(result.is_ok());
+        };
     }
 }
