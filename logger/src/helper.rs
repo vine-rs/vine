@@ -153,12 +153,12 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{helper::Helper, options::Options, NewLogger};
+    use crate::{helper::Helper, options::Options, new_logger};
     use anyhow::Result;
 
     #[test]
     fn test_new_helper() -> Result<()> {
-        let l = NewLogger::<String>(Some(Options::new()))?;
+        let l = new_logger::<String>(Some(Options::new()))?;
         let mut helper = Helper::new(l);
         helper.debug(format!("debug test").as_bytes());
         helper.info(format!("info test").as_bytes());

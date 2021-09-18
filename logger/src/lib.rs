@@ -22,7 +22,7 @@ pub(crate) mod options;
 static DEFAULT_LOGGER: OnceCell<Arc<Mutex<Helper<String>>>> = OnceCell::new();
 pub fn global_logger() -> &'static Arc<Mutex<Helper<String>>> {
     DEFAULT_LOGGER.get_or_init(|| {
-        let l = NewLogger::<String>(Some(Options::new())).unwrap();
+        let l = new_logger::<String>(Some(Options::new())).unwrap();
         let helper = Helper::new(l);
         Arc::new(Mutex::new(helper))
     })
@@ -129,7 +129,7 @@ where
     }
 }
 
-pub fn NewLogger<T: Into<String> + Clone + Send>(
+pub fn new_logger<T: Into<String> + Clone + Send>(
     opts: Option<Options<T>>,
 ) -> Result<impl Logger<T>> {
     let opt = match opts {
@@ -151,7 +151,7 @@ mod tests {
     };
 
     use crate::{
-        global_logger, level::Level, options::Options, set_global_logger, Helper, Logger, NewLogger,
+        global_logger, level::Level, options::Options, set_global_logger, Helper, Logger, new_logger,
     };
     use anyhow::Result;
 
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_new_logger() -> Result<()> {
-        let mut l = NewLogger::<String>(Some(Options::new()))?;
+        let mut l = new_logger::<String>(Some(Options::new()))?;
         let mut m = HashMap::new();
         m.insert("a".to_string(), "b".to_string());
         l.fields(m);
@@ -173,8 +173,8 @@ mod tests {
 
     #[test]
     fn test_sync_logger() -> Result<()> {
-        let l = NewLogger::<String>(Some(Options::new()))?;
-        let mut helper = Helper::new(l);
+        let l = new_logger::<String>(Some(Options::new()))?;
+        let helper = Helper::new(l);
         let sync_logger = Arc::new(Mutex::new(helper));
 
         let l1 = sync_logger.clone();
@@ -198,8 +198,8 @@ mod tests {
 
     #[test]
     fn test_set_global_logger() -> Result<()> {
-        let l = NewLogger::<String>(Some(Options::new()))?;
-        let mut helper = Helper::new(l).with_error("aa".to_string());
+        let l = new_logger::<String>(Some(Options::new()))?;
+        let helper = Helper::new(l).with_error("aa".to_string());
         set_global_logger(helper)?;
 
         let a = global_logger().clone();
