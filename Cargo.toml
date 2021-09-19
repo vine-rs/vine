@@ -1,11 +1,17 @@
 [package]
-name = "rvine"
+name = "vine"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 build = "build.rs"
+
+[features]
+
+default = ["registry-etcd"]
+
+registry-etcd = []
 
 [workspace]
 
@@ -20,18 +26,22 @@ members = [
     # lib
     "errors",
     "logger",
+
+    # util
+    "vine-util"
 ]
 
 [dependencies]
-# rvine core library 
+# vine core library 
 codec = { path = "codec" }
 registry = { path = "registry" }
 broker = { path = "broker" }
 server = { path = "server" }
 client = { path = "client" }
-# rvine library
+# vine library
 logger = { path = "logger" }
 errors = { path = "errors" }
+vine-util = { path = "vine-util" }
 
 [build-dependencies]
 tonic-build = { version = "0.5.2", features = ["prost", "compression"] }

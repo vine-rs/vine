@@ -198,7 +198,7 @@ impl Registry for EtcdRegistry {
     }
 
     #[inline]
-    fn options(&self) -> Options {
+    async fn options(&self) -> Options {
         self.options.clone()
     }
 
@@ -324,7 +324,7 @@ impl Registry for EtcdRegistry {
     }
 
     #[inline]
-    fn string(&self) -> &'static str {
+    async fn string(&self) -> &'static str {
         "etcd"
     }
 }
@@ -344,7 +344,7 @@ mod test {
     #[tokio::test]
     async fn test_new_etcd_registry() -> Result<()> {
         let e = EtcdRegistry::new(None).await?;
-        assert_eq!(e.string().to_string(), "etcd".to_string());
+        assert_eq!(e.string().await.to_string(), "etcd".to_string());
 
         Ok(())
     }

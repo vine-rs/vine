@@ -1,3 +1,8 @@
+pub(crate) mod helper;
+pub(crate) mod level;
+pub(crate) mod macro_rule;
+pub(crate) mod options;
+
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -13,11 +18,6 @@ use errors::Result;
 use level::Level;
 use options::Options;
 use vine_util::caller::caller;
-
-pub(crate) mod helper;
-pub(crate) mod level;
-pub(crate) mod macro_rule;
-pub(crate) mod options;
 
 static DEFAULT_LOGGER: OnceCell<Arc<Mutex<Helper<String>>>> = OnceCell::new();
 pub fn global_logger() -> &'static Arc<Mutex<Helper<String>>> {

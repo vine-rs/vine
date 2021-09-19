@@ -1,7 +1,7 @@
-use crate::types::Service;
-
 pub(crate) mod lib;
 pub(crate) mod watch;
+
+use crate::types::Service;
 
 static PREFIX: &str = r"/vine/registry";
 
