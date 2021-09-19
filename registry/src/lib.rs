@@ -9,7 +9,7 @@ use crate::options::{
     DeregisterOptions, GetOptions, ListOptions, Options, RegisterOptions, WatchOptions,
 };
 use crate::types::Service;
-use etcd::lib::EtcdRegistry;
+use etcd::EtcdRegistry;
 use std::sync::Arc;
 use tokio::sync::{Mutex, OnceCell};
 
@@ -106,7 +106,7 @@ mod tests {
 
     use errors::Result;
 
-    use crate::{deregister, etcd::lib::EtcdRegistry, global_registry, list_service, register, set_global_registry, types::{Node, Service}};
+    use crate::{deregister, etcd::EtcdRegistry, global_registry, list_service, register, set_global_registry, types::{Node, Service}};
 
     #[tokio::test]
     async fn test_global_registry() {
