@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use errors::{bail, err, Result};
-use etcd_client::{Client, GetOptions as EGetOptions, PutOptions};
+use etcd_client::{Client, ConnectOptions, GetOptions as EGetOptions, PutOptions};
 use itertools::Itertools;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
@@ -9,45 +9,65 @@ use std::str;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use super::watch::EtcdWatcher;
+use super::{decode, encode, node_path, service_path, PREFIX};
 use crate::options::{
     DeregisterOptions, GetOptions, ListOptions, Options, RegisterOptions, WatchOptions,
 };
 use crate::types::{Node, Service};
 use crate::{Registry, Watcher};
 
-use super::watch::EtcdWatcher;
-
+#[derive(Clone)]
 pub struct EtcdRegistry {
     client: Client,
     options: Options,
 
     /// 0: registers, 1: leases
-    data: Arc<Mutex<(HashMap<String, u64>, HashMap<String, i64>)>>, // registers: Arc<Mutex<>>,
-                                                                    // leases: Arc<Mutex<>>
+    data: Arc<Mutex<(HashMap<String, u64>, HashMap<String, i64>)>>, 
 }
-
-static PREFIX: &str = r"/vine/registry";
 
 impl EtcdRegistry {
     pub async fn new(opt: Option<Options>) -> Result<Self> {
-        let mut options = match opt {
+        let mut opts = match opt {
             None => Options::new(),
             Some(opt) => opt,
         };
 
-        if options.timeout == 0 {
-            options.timeout = 5;
+        if opts.timeout == 0 {
+            opts.timeout = 5;
         }
 
-        let client = Client::connect(&options.addrs, None).await?;
+        let client = Client::connect(&opts.addrs, None).await?;
 
         let eg = EtcdRegistry {
             client,
-            options,
+            options: opts,
             data: Arc::new(Mutex::new((HashMap::new(), HashMap::new()))),
         };
 
         Ok(eg)
+    }
+
+    async fn configure(&mut self, opt: Option<Options>) -> Result<()> {
+        let mut opts = match opt {
+            None => Options::new(),
+            Some(opt) => opt,
+        };
+
+        if opts.timeout == 0 {
+            opts.timeout = 5;
+        }
+
+        let options = {
+            let copts = ConnectOptions::new();
+            copts
+        };
+
+        self.client = Client::connect(&opts.addrs, Some(options)).await?;
+        self.options = opts;
+        self.data = Arc::new(Mutex::new((HashMap::new(), HashMap::new())));
+
+        Ok(())
     }
 
     async fn register_node(
@@ -172,13 +192,14 @@ impl EtcdRegistry {
 
 #[async_trait]
 impl Registry for EtcdRegistry {
-    fn init(&mut self, opt: Option<Options>) -> Result<()> {
-        todo!()
+    async fn init(&mut self, opt: Option<Options>) -> Result<()> {
+        self.configure(opt).await?;
+        Ok(())
     }
 
     #[inline]
-    fn options(&self) -> Option<Options> {
-        Some(self.options.clone())
+    fn options(&self) -> Options {
+        self.options.clone()
     }
 
     #[inline]
@@ -297,8 +318,8 @@ impl Registry for EtcdRegistry {
         Ok(services)
     }
 
-    async fn watch(&self, _opt: Option<WatchOptions>) -> Result<Box<dyn Watcher + Send>> {
-        let watcher = EtcdWatcher::new().await?;
+    async fn watch(&self, opt: Option<WatchOptions>) -> Result<Box<dyn Watcher + Send + Sync>> {
+        let watcher = EtcdWatcher::new(self.client.clone(), opt).await?;
         Ok(Box::new(watcher))
     }
 
@@ -306,30 +327,6 @@ impl Registry for EtcdRegistry {
     fn string(&self) -> &'static str {
         "etcd"
     }
-}
-
-fn encode(s: &Service) -> impl Into<String> {
-    match serde_json::to_string(s) {
-        Ok(s) => s,
-        Err(_) => "".to_string(),
-    }
-}
-
-fn decode<T: Into<String>>(data: T) -> Option<Service> {
-    match serde_json::from_str(data.into().as_str()) {
-        Ok(s) => Some(s),
-        Err(_) => None,
-    }
-}
-
-fn node_path<T: Into<String>>(s: T, id: T) -> String {
-    let service = s.into().replace("/", "-");
-    let node = id.into().replace("/", "-");
-    PREFIX.to_string() + "/" + service.as_str() + "/" + node.as_str()
-}
-
-fn service_path<T: Into<String>>(s: T) -> String {
-    PREFIX.to_string() + "/" + s.into().replace("/", "-").as_str()
 }
 
 #[cfg(test)]
@@ -445,7 +442,46 @@ mod test {
     #[tokio::test]
     async fn test_watch() -> Result<()> {
         let e = EtcdRegistry::new(None).await?;
-        let mut watcher = e.watch(None).await?;
+
+        let ee = e.clone();
+        tokio::spawn(async move {
+            let watcher = ee.watch(None).await.unwrap();
+            while let Ok(r) = watcher.next().await {
+                let rr = r.clone();
+                assert!(r.service.is_some());
+                assert_eq!(r.service.unwrap().name, "io.vine.helloworld");
+                println!("{} {:?}", rr.action, rr.service);
+            }
+        });
+
+        let node = Node {
+            id: "1".to_string(),
+            address: "192.168.1.111".to_string(),
+            port: 11101,
+            metadata: HashMap::new(),
+        };
+        let s = Service {
+            name: "io.vine.helloworld".to_string(),
+            version: "v1.0.0".to_string(),
+            metadata: HashMap::new(),
+            endpoints: vec![],
+            nodes: vec![node],
+            options: None,
+            apis: None,
+        };
+
+        e.register(&s, None).await?;
+
+        let services = e.get_service(s.name.clone(), None).await?;
+        assert_eq!(services.len(), 1);
+        assert_eq!(services[0].nodes[0].id, "1");
+
+        let result = e.get_service("ss".to_string(), None).await;
+        assert!(result.is_err());
+
+        e.deregister(&s, None).await?;
+
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
 
         Ok(())
     }

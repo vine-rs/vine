@@ -14,6 +14,20 @@ pub struct Service {
     pub apis: Option<OpenApi>,
 }
 
+impl Service {
+    pub fn new() -> Self {
+        Service {
+            name: "".to_string(),
+            version: "".to_string(),
+            metadata: HashMap::new(),
+            endpoints: Vec::new(),
+            nodes: Vec::new(),
+            options: None,
+            apis: None,
+        }
+    }
+}
+
 /// Node represents the node the service is on
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Node {
@@ -68,6 +82,28 @@ pub struct Result {
     pub service: Option<Service>,
     /// unix timestamp
     pub timestamp: i64,
+}
+
+impl Result {
+    pub fn new() -> Self {
+        Result {
+            action: "".to_string(),
+            service: None,
+            timestamp: 0,
+        }
+    }
+
+    pub fn set_action(&mut self, action: String)  {
+        self.action = action;
+    }
+
+    pub fn set_service(&mut self, service: Service)  {
+        self.service = Some(service);
+    }
+
+    pub fn set_timestamp(&mut self, timestamp: i64)  {
+        self.timestamp = timestamp;
+    }
 }
 
 /// Event is registry event

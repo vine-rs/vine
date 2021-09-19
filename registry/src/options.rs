@@ -3,7 +3,6 @@ pub struct Options {
     pub addrs: Vec<String>,
     pub timeout: i64,
     pub secure: bool,
-    // pub tls_config:
 }
 
 impl Options {
