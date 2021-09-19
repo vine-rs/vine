@@ -1,14 +1,15 @@
 pub(crate) mod watch;
 
-use async_trait::async_trait;
-use errors::{bail, err, Result};
-use etcd_client::{Client, ConnectOptions, GetOptions as EGetOptions, PutOptions};
-use itertools::Itertools;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::str;
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use errors::{bail, err, Result};
+use etcd_client::{Client, ConnectOptions, GetOptions as EGetOptions, PutOptions};
+use itertools::Itertools;
 use tokio::sync::Mutex;
 
 use crate::etcd::watch::EtcdWatcher;
@@ -21,11 +22,11 @@ use crate::{Registry, Watcher};
 static PREFIX: &str = r"/vine/registry";
 
 /// the implement of [`Registry`] by etcd
-/// 
+///
 /// ```rust
 /// let registry = EtcdRegistry::new().await?;
 /// let services = registry.get_service("helloworld", None).await?;
-/// ///
+/// ```
 #[derive(Clone)]
 pub struct EtcdRegistry {
     client: Client,
@@ -57,6 +58,7 @@ impl EtcdRegistry {
         Ok(eg)
     }
 
+    #[inline]
     async fn configure(&mut self, opt: Option<Options>) -> Result<()> {
         let mut opts = match opt {
             None => Options::new(),
@@ -79,6 +81,7 @@ impl EtcdRegistry {
         Ok(())
     }
 
+    #[inline]
     async fn register_node(
         &self,
         s: &Service,
@@ -229,6 +232,7 @@ impl Registry for EtcdRegistry {
         Ok(())
     }
 
+    #[inline]
     async fn deregister(&self, s: &Service, _: Option<DeregisterOptions>) -> Result<()> {
         if s.nodes.len() == 0 {
             bail!("required at lease one node")
@@ -252,6 +256,7 @@ impl Registry for EtcdRegistry {
         Ok(())
     }
 
+    #[inline]
     async fn get_service(&self, s: String, _opt: Option<GetOptions>) -> Result<Vec<Service>> {
         let mut client = self.client.clone();
 
@@ -292,6 +297,7 @@ impl Registry for EtcdRegistry {
         Ok(services)
     }
 
+    #[inline]
     async fn list_service(&self, _opt: Option<ListOptions>) -> Result<Vec<Service>> {
         let mut client = self.client.clone();
 
@@ -327,6 +333,7 @@ impl Registry for EtcdRegistry {
         Ok(services)
     }
 
+    #[inline]
     async fn watch(&self, opt: Option<WatchOptions>) -> Result<Box<dyn Watcher + Send + Sync>> {
         let watcher = EtcdWatcher::new(self.client.clone(), opt).await?;
         Ok(Box::new(watcher))
