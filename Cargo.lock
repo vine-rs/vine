@@ -136,6 +136,14 @@ version = "0.1.0"
 [[package]]
 name = "codec"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "errors",
+ "prost",
+ "prost-types",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "crc32fast"
