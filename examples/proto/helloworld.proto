@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package helloworld;
+
+service HelloWorld {
+    rpc Echo(Request) returns (Response);
+    rpc Stream(stream Request) returns (stream Response);
+}
+
+message Request {
+    string name = 1;
+}
+
+message Response {
+    string reply = 1;
+}
+
+

@@ -43,7 +43,6 @@ impl Hash for Node {
         self.address.hash(state);
         self.port.hash(state);
         let mut hasher = DefaultHasher::new();
-        // self.metadata.hash(state);
         for (k, v) in &self.metadata {
             hasher.write(k.as_bytes());
             hasher.write(v.as_bytes());

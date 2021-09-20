@@ -1,7 +1,7 @@
-pub(crate) mod helper;
-pub(crate) mod level;
-pub(crate) mod macro_rule;
-pub(crate) mod options;
+pub mod helper;
+pub mod level;
+pub mod macro_rule;
+pub mod options;
 
 use std::{
     collections::HashMap,
@@ -13,7 +13,6 @@ use chrono::prelude::*;
 use helper::Helper;
 use itertools::Itertools;
 use once_cell::sync::OnceCell;
-
 use errors::Result;
 use level::Level;
 use options::Options;

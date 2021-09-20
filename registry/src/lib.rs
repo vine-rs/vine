@@ -5,10 +5,10 @@ pub mod etcd;
 
 pub mod types;
 
-use crate::options::{
+use self::options::{
     DeregisterOptions, GetOptions, ListOptions, Options, RegisterOptions, WatchOptions,
 };
-use crate::types::Service;
+use self::types::Service;
 use etcd::EtcdRegistry;
 use std::sync::Arc;
 use tokio::sync::{Mutex, OnceCell};
@@ -16,19 +16,20 @@ use tokio::sync::{Mutex, OnceCell};
 use async_trait::async_trait;
 use errors::Result;
 
-async fn init_registry() -> Arc<Mutex<Box<dyn Registry + Send + 'static>>> {
+async fn init_registry() -> Arc<Mutex<Box<dyn Registry + Sync + Send + 'static>>> {
+    println!("init");
     let registry = EtcdRegistry::new(None).await.unwrap();
     Arc::new(Mutex::new(Box::new(registry)))
 }
 
-static DEFAULT_REGISTRY: OnceCell<Arc<Mutex<Box<dyn Registry + Send + 'static>>>> =
+static DEFAULT_REGISTRY: OnceCell<Arc<Mutex<Box<dyn Registry + Sync + Send + 'static>>>> =
     OnceCell::const_new();
-pub async fn global_registry() -> &'static Arc<Mutex<Box<dyn Registry + Send + 'static>>> {
+pub async fn global_registry() -> &'static Arc<Mutex<Box<dyn Registry + Sync + Send + 'static>>> {
     let out = DEFAULT_REGISTRY.get_or_init(init_registry).await;
     out
 }
 
-pub fn set_global_registry(reg: impl Registry + 'static) -> Result<()> {
+pub fn set_global_registry(reg: impl Registry + Sync + Send + 'static) -> Result<()> {
     match DEFAULT_REGISTRY.set(Arc::new(Mutex::new(Box::new(reg)))) {
         Ok(()) => Ok(()),
         Err(_) => Err(errors::err!("set global logger failed")),
@@ -43,7 +44,10 @@ pub trait Registry: Send {
     async fn deregister(&self, s: &Service, opt: Option<DeregisterOptions>) -> Result<()>;
     async fn get_service(&self, s: String, opt: Option<GetOptions>) -> Result<Vec<Service>>;
     async fn list_service(&self, opt: Option<ListOptions>) -> Result<Vec<Service>>;
-    async fn watch(&self, opt: Option<WatchOptions>) -> Result<Box<dyn Watcher + Send + Sync>>;
+    async fn watch(
+        &self,
+        opt: Option<WatchOptions>,
+    ) -> Result<Box<dyn Watcher + Sync + Send + Sync>>;
     async fn string(&self) -> &'static str;
 }
 
@@ -106,7 +110,12 @@ mod tests {
 
     use errors::Result;
 
-    use crate::{deregister, etcd::EtcdRegistry, global_registry, list_service, register, set_global_registry, types::{Node, Service}};
+    use crate::{
+        deregister,
+        etcd::EtcdRegistry,
+        global_registry, list_service, register, set_global_registry,
+        types::{Node, Service},
+    };
 
     #[tokio::test]
     async fn test_global_registry() {
@@ -116,7 +125,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_set_global_registry()-> Result<()> {
+    async fn test_set_global_registry() -> Result<()> {
         let registry = EtcdRegistry::new(None).await?;
         set_global_registry(registry)?;
         let rc = global_registry().await.clone();

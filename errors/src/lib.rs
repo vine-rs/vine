@@ -1,6 +1,8 @@
+pub use anyhow;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use vine_util::caller::caller;
+
+use std::fmt;
 
 pub type Result<T> = anyhow::Result<T>;
 
@@ -508,11 +510,11 @@ mod tests {
     }
 
     fn bail() -> Result<()> {
-        bail!("bail error")
+        bail!("bail error");
     }
 
     fn bail_status() -> Result<()> {
-        bail!(Status::new("io.vine", "custom", Code::InternalServerError))
+        bail!(Status::new("io.vine", "custom", Code::InternalServerError));
     }
 
     #[test]

@@ -1,4 +1,4 @@
-pub(crate) mod watch;
+pub mod watch;
 
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ use etcd_client::{Client, ConnectOptions, GetOptions as EGetOptions, PutOptions}
 use itertools::Itertools;
 use tokio::sync::Mutex;
 
-use crate::etcd::watch::EtcdWatcher;
+use self::watch::EtcdWatcher;
 use crate::options::{
     DeregisterOptions, GetOptions, ListOptions, Options, RegisterOptions, WatchOptions,
 };
