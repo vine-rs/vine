@@ -1,6 +1,6 @@
-use errors::Result;
+use errors::{Result, Status};
 
-use std::collections::HashMap;
+use std::{collections::HashMap, io};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MessageType {
@@ -13,16 +13,39 @@ pub enum MessageType {
 type NewCodec = dyn FnOnce() -> Codec + Sync + Send + 'static;
 
 pub trait Codec {
+    /// The encodable message.
+    type Read: Send + 'static;
+    /// The decodable message.
+    type Write: Send + 'static;
+
+    type Reader: Reader<Item = Self::Read, Error = Status> + Send + Sync + 'static;
+
+    type Writer: Writer<Item = Self::Write, Error = Status> + Send + Sync + 'static;
+
     fn close() -> Result<()>;
     fn string() -> &'static str;
 }
 
 pub trait Reader<T> {
+    /// The type that is encoded.
+    type Item;
+
+    /// The type of encoding errors.
+    ///
+    /// The type of unrecoverable frame encoding errors.
+    type Error: From<io::Error>;
+
     fn read_header(m: Message, mt: MessageType) -> Result<()>;
     fn read_body(body: T) -> Result<()>;
 }
 
 pub trait Writer<T> {
+    /// The type that is decoded.
+    type Item;
+
+    /// The type of unrecoverable frame decoding errors.
+    type Error: From<io::Error>;
+
     fn write(m: Message, body: T) -> Result<()>;
 }
 
