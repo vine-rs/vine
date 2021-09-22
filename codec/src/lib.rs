@@ -1,4 +1,7 @@
-use errors::{Result, Status};
+pub mod buffer;
+
+use buffer::{DecodeBuf, EncodeBuf};
+use errors::{Status};
 
 use std::{collections::HashMap, io};
 
@@ -12,7 +15,7 @@ pub enum MessageType {
 
 type NewCodec = dyn FnOnce() -> Codec + Sync + Send + 'static;
 
-pub trait Codec {
+pub trait Codec: Default {
     /// The encodable message.
     type Read: Send + 'static;
     /// The decodable message.
@@ -22,11 +25,11 @@ pub trait Codec {
 
     type Writer: Writer<Item = Self::Write, Error = Status> + Send + Sync + 'static;
 
-    fn close() -> Result<()>;
+    fn close(&mut self) -> Result<(), std::io::Error>;
     fn string() -> &'static str;
 }
 
-pub trait Reader<T> {
+pub trait Reader {
     /// The type that is encoded.
     type Item;
 
@@ -35,18 +38,18 @@ pub trait Reader<T> {
     /// The type of unrecoverable frame encoding errors.
     type Error: From<io::Error>;
 
-    fn read_header(m: Message, mt: MessageType) -> Result<()>;
-    fn read_body(body: T) -> Result<()>;
+    fn read_header(&self, m: Message, mt: MessageType) -> Result<(), Self::Error>;
+    fn read_body(&mut self, src: &mut DecodeBuf<'_>) -> Result<Option<Self::Item>, Self::Error>;
 }
 
-pub trait Writer<T> {
+pub trait Writer {
     /// The type that is decoded.
     type Item;
 
     /// The type of unrecoverable frame decoding errors.
     type Error: From<io::Error>;
 
-    fn write(m: Message, body: T) -> Result<()>;
+    fn write(&mut self, item: Self::Item, dst: &mut EncodeBuf<'_>) -> Result<(), Self::Error>;
 }
 
 /// Message represents detailed information about
