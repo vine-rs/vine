@@ -14,7 +14,6 @@ use super::{decode, service_path, PREFIX};
 
 #[derive(Clone)]
 pub struct EtcdWatcher {
-    client: Client,
     w: Arc<Mutex<(EWatcher, WatchStream)>>,
 }
 
@@ -103,7 +102,6 @@ impl EtcdWatcher {
         let w = client.clone().watch(watch_path, Some(wopts)).await?;
 
         let watcher = EtcdWatcher {
-            client,
             w: Arc::new(Mutex::new(w)),
         };
         Ok(watcher)

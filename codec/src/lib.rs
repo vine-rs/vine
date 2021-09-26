@@ -13,7 +13,7 @@ pub enum MessageType {
     Event = 3,
 }
 
-type NewCodec = dyn FnOnce() -> Codec + Sync + Send + 'static;
+// type NewCodec = dyn FnOnce() -> Codec + Sync + Send + 'static;
 
 pub trait Codec: Default {
     /// The encodable message.
